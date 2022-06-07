@@ -1,4 +1,10 @@
-\begin{thebibliography}{Gau22}
+\begin{thebibliography}{BRC16}
+
+\bibitem[BRC16]{BlurDetection}
+Raghav Bansal, Gaurav Raj, and Tanupriya Choudhury.
+\newblock Blur image detection using laplacian operator and open-cv.
+\newblock In {\em 2016 International Conference System Modeling \& Advancement
+  in Research Trends (SMART)}, pages 63--67, 2016.
 
 \bibitem[Gau22]{Gitlab}
 Gaube.
