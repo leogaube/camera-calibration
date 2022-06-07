@@ -1,0 +1,39 @@
+\documentclass[bibliography=totoc]{scrartcl}
+\usepackage[ngerman, english]{babel}
+\usepackage{rwukoma}
+\usepackage[pdfusetitle]{hyperref}
+\usepackage{lipsum,caption}
+\usepackage{algorithm, algpseudocode}
+\usepackage{graphicx}
+\usepackage{subcaption}
+\usepackage{listings}
+\usepackage{float}
+
+\setlength{\belowcaptionskip}{5pt}
+
+\title{Camera Calibration}
+\author{Leopold Gaube - 34948, IN}
+\date{\today}
+\begin{document}
+\maketitle
+\tableofcontents
+
+\clearpage
+
+\section{Task Overview}
+
+- 3D scene projected onto 2D image (loss of information)
+- distortions
+- intrinsic and extrinsic camera parameters
+- can be used to undistort images/frames
+
+\cite{OpenCV}
+The code and all frames used for this camera calibration task are available in this \href{https://gitlab.com/gaubeleo/camera-calibration}{GitLab repository} \cite{Gitlab}.
+
+\clearpage
+\section*{List of Acronyms}
+\addcontentsline{toc}{section}{List of Acronyms}
+
+\bibliographystyle{alpha}
+\bibliography{literature}
+\end{document}

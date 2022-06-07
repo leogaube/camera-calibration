@@ -1,0 +1,5 @@
+\babel@toc {english}{}
+\contentsline {section}{\numberline {1}Task Overview}{2}{section.1}%
+\contentsline {section}{List of Acronyms}{3}{section*.2}%
+\contentsline {section}{\nonumberline References}{3}{section*.4}%
+\providecommand \tocbasic@end@toc@file {}\tocbasic@end@toc@file 
