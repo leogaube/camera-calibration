@@ -24,24 +24,24 @@
 \section{Introduction}
 
 When taking images or video with a camera, a 3D scene gets projected onto a 2D image.
-A simple pinhole-camera model is still often used explain the concept of this projection, but nowadays modern cameras use lenses to capture more light.
+A simple pinhole camera model is still often used explain the concept of this projection, but nowadays modern cameras use lenses to capture more light.
 This gives rise to a problem where supposed straight lines, for instance a door, do not appear straight in the resulting image. 
 This unwanted effect is called lens distortion and is usually most pronounced with ultrawide lenses.
 
 The following report presents an algorithm to calibrate a camera and undistort images based on this calibration.
-Two calibration videos, each depicting a checkerboard pattern in various positions, has been provided by the course lecturer.
+Two calibration videos, each depicting a checkerboard pattern in various positions, has been provided by the lecturer of the Computer Vision course.
 In both videos Barrel Distortion is clearly visible and its removal is the objective of the hereby presented algorithm.
 
 First, the algorithm extracts appropriate frames from the calibration video.
-Then in each calibration frames the checkerboard pattern is localized.
+Then in each calibration frame the checkerboard pattern is localized.
 These positions are used to retrieve the intrinsic matrix of the camera. 
-The intrinsic matrix allows to undistort any image taken with this camera, which is demonstrated on the calibration frames themselves.
+The intrinsic matrix allows to undistort any image taken with this camera, which is finally demonstrated on the calibration frames themselves.
 
 The code and all frames used for this camera calibration task are available in this \href{https://gitlab.com/gaubeleo/camera-calibration}{GitLab repository} \cite{Gitlab}.
 
 \section{Frame Selection}
 In theory, we only need three frames to retrieve the intrinsic camera matrix. (why?)
-In practise, more frames give better results and it is also advisable to use frames with the checkerboard present in different parts of the image.
+In practise, more frames give better results and it is also advisable to use frames with the checkerboard present in different parts of the image and with varying distance.
 The OpenCV documentation advises to use at least ten images for a camera calibration \cite{CameraCalibration}.
 It is possible to manually extract appropriate frames from the calibration video, but we chose to automate this process in order to minimize work for the user in future calibrations. 
 
@@ -49,9 +49,9 @@ Naturally, we do not want to use consecutive frames, but frames that span the en
 We section the video into 20 evenly spaced time steps and try to find an appropriate frame for each section.
 This way, we get varying checkerboard positions, assuming the checkerboard is being moved around in the calibration video.
 
-Some of these frames may have a lot of motion blur which can be problematic for accurately localizing the checkerboard corners.
-So instead, for each video section, we consider 25 consecutive candidate frames (corresponding to one second of video) from which we only choose the least blurred one. (ToDo: Grafik?)
-The extend of blur in an image can be calculated using the Variance of Laplacian. \cite{BlurDetection}
+Some of the frames may have a lot of motion blur which can be problematic for accurately localizing the checkerboard corners.
+So instead, we consider 25 consecutive candidate frames for each video section (corresponding to one second of video) from which we only choose the least blurred one. (ToDo: Grafik?)
+The extent of blur in an image can be calculated using the Variance of Laplacian, with a low variance corresponding to a high amount of blur \cite{BlurDetection}.
 With OpenCV it is simple to obtain a focus measure for any greyscale image:
 
 \begin{lstlisting}
@@ -73,41 +73,39 @@ K =
 \end{pmatrix}
 $$
 
-with $f_x$, $f_y$ representing the focal length and $c_x$, $c_y$ representing the optical center in x and y direction, respectively.\cite{CameraCalibration}
-
+with $f_x$, $f_y$ representing the focal length and $c_x$, $c_y$ representing the optical center in x and y direction, respectively \cite{CameraCalibration}.
 Together with the distortion coefficients 
 
-$$(k_1, k_2, p_1, p_2, k_3)$$,
+$$(k_1, k_2, p_1, p_2, k_3)$$
 
 the intrinsic matrix can be used to undistort images.
 
 In order to estimate the instrinsic camera matrix and distortion coefficients, a predefined object has to be detected and localized in the calibration frames.
 The checkerboard serves this algorithm as such a predefined object.
-
-Unfortunately, even with sharp images it is not guaranteed that OpenCV can locate the checkerboard.
 The checkerboard in both calibration videos shows 8x8 squares, but only corner points of four intersecting squares are used, 
 thus, it depicts a 7x7 pattern.
+Unfortunately, even with sharp images it is not guaranteed that OpenCV can always locate the checkerboard.
 Successful detections are highly dependant on the size of the pattern. 
 Curiously, the 7x7 pattern is rarly detected even when the full checkerboard is clearly visible in the image frame.
 Smaller patterns are detected more frequently, so a 5x5 pattern is chosen for this algorithm.
-
+Using the adaptiveThreshold and normalizeImage flags also improves the detection consistency.
 In both videos, the 5x5 checkerboard pattern can be found in 13 of the 20 sections, which fulfills the OpenCV recommendation of at least ten images.
 
 The cv2.findChessboard() method only localizes the checkerboard pattern in terms of pixel coordinates, which is inprecise.
-With cv2.cornerSubPix() these corrdinates can be refined to sub-pixel precision.
+With cv2.cornerSubPix() these coordinates can be refined to sub-pixel precision.
 
-In addition to the 2D image positions of the checkerbord pattern of all calibration frames, the 3D real-world object positions are also needed.
-The world-coordinate system can be set to any position, canonically, we choose an outer corner of our checkerboard as the world-coordinate origin.
+In addition to the 2D image positions of all detected checkerboards, the corresponding 3D real-world object positions are also needed.
+The world coordinate system can be set to any position. 
+Canonically, we choose the left top corner of the checkerboard as its origin.
 Furthermore, the distance between each checkerboard square is set to be one unit in both x and y direction. 
 The checkerboard is flat, which allows all object points to sit on the z=0 plane.
 This makes it possible to set identical real-world object positions for all 15 calibration frames.
 
-ToDo: labeled checkerboard
+ToDo: labeled checkerboard image
 
+
+\section{Results}
 OpenCV provides a functionality to calculate the intrinsic camera matrix and distortion coefficients automatically from the object positions and corresponding image positions.
-
-
-\section{Undistortion}
 Our Algorithm retrieved the following intrinsic matrix for the old video
 
 $$
@@ -121,7 +119,7 @@ $$
 
 with distortion coefficients
 
-$(-0.83698399, 0.69455783, -0.01109099, -0.01136698, 0.0078521)$
+$$(-0.83698399, 0.69455783, -0.01109099, -0.01136698, 0.0078521)$$
 
 and an error of 0.09529720894585678.
 
@@ -142,14 +140,13 @@ $$(-0.83698399, 0.69455783, -0.01109099, -0.01136698, 0.0078521)$$
 
 and an error of 0.09529720894585678.
 
+
+Undistorting images result in some black regions on the edges where there is no information in the orignal image.
+...Croping
+
 The intrinsic matrix gets saved to a file, as it has to be calculated only once and can be reused to undistort images taken in different scenes assuming the same camera is being used.
 
-
-
 \clearpage
-\section*{List of Acronyms}
-\addcontentsline{toc}{section}{List of Acronyms}
-
 \bibliographystyle{alpha}
 \bibliography{literature}
 \end{document}

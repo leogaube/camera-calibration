@@ -148,8 +148,8 @@ def undistort(frames, result_dir):
 
 if __name__ == "__main__":
     DEBUG = False
-    PATTERN_SIZE = (5, 5)
-    NUM_CALIBRATION_FRAMES = 18
+    PATTERN_SIZE = (6, 6)
+    NUM_CALIBRATION_FRAMES = 20
     
     CB_FLAGS = (
         cv.CALIB_CB_NORMALIZE_IMAGE

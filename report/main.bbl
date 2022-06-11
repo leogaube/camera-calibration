@@ -11,4 +11,11 @@ Gaube.
 \newblock Camera calibration.
 \newblock \url{https://gitlab.com/gaubeleo/camera-calibration}, 07.06.2022.
 
+\bibitem[Ope22]{CameraCalibration}
+OpenCV.
+\newblock Opencv - camera calibration.
+\newblock
+  \url{https://docs.opencv.org/4.x/dc/dbb/tutorial_py_calibration.html},
+  11.06.2022.
+
 \end{thebibliography}
