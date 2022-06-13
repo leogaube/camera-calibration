@@ -17,16 +17,16 @@ def extract_frames(source_file, output_dir, num_frames, num_candidate_frames=50)
         for filename in os.listdir(output_dir):
             frames.append(cv.imread(os.path.join(output_dir, filename)))
         return frames
-    
+
     print("Extracting frames from calibration video")
     video_capture = cv.VideoCapture(source_file)
 
     # frame_count = int(video_capture.get(cv.CAP_PROP_FRAME_COUNT))
     # not working for .h264 video --> set frame_count manually (2375 for video_new.h264, 4900 for video_old.h264)
     frame_count = 2375 if "_new.h264" in source_file else 4900
-    frame_offset = frame_count // (num_frames+1)
-    
-    assert(frame_offset >= num_candidate_frames)
+    frame_offset = frame_count // (num_frames + 1)
+
+    assert frame_offset >= num_candidate_frames
 
     current_frame = 0
 
@@ -44,12 +44,12 @@ def extract_frames(source_file, output_dir, num_frames, num_candidate_frames=50)
 
             gray_frame = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
             focus_score = cv.Laplacian(gray_frame, cv.CV_64F).var()
-            
+
             candidate_frames.append((gray_frame, frame, focus_score))
-            
+
         # sort candidate frames by focus_score
         candidate_frames.sort(key=lambda tup: tup[2], reverse=True)
-        
+
         least_blurry_frame = None
         for gray_frame, color_frame, _ in candidate_frames:
             success, corners = cv.findChessboardCorners(
@@ -58,13 +58,19 @@ def extract_frames(source_file, output_dir, num_frames, num_candidate_frames=50)
             if success:
                 least_blurry_frame = color_frame
                 break
-            
+
         if least_blurry_frame is not None:
-            cv.imwrite(os.path.join(output_dir, f"frame_{len(frames)}.png"), least_blurry_frame)
+            cv.imwrite(
+                os.path.join(output_dir, f"frame_{len(frames)}.png"), least_blurry_frame
+            )
             frames.append(least_blurry_frame)
-            print(f"calibration frame for [{current_frame-num_candidate_frames}:{current_frame}] was found")
+            print(
+                f"calibration frame for [{current_frame-num_candidate_frames}:{current_frame}] was found"
+            )
         else:
-            print(f"unable to detect checkerboard in any in frames [{current_frame-num_candidate_frames}:{current_frame}]")
+            print(
+                f"unable to detect checkerboard in any in frames [{current_frame-num_candidate_frames}:{current_frame}]"
+            )
 
     return frames
 
@@ -112,10 +118,10 @@ def undistort(frames, result_dir):
     ret, int_mtx, dist_coef, rvecs, tvecs = cv.calibrateCamera(
         real_world_points_3d, img_points_2d, (1920, 1080), None, None
     )
-    
+
     print("Intrinsic Matrix:")
     print(int_mtx)
-    
+
     print("\nDistortion Coefficients:")
     print(dist_coef)
 
@@ -124,37 +130,37 @@ def undistort(frames, result_dir):
 
     for i, frame in enumerate(frames):
         h, w = frame.shape[:2]
-        newcameramtx, roi = cv.getOptimalNewCameraMatrix(int_mtx, dist_coef, (w, h), 1, (w, h))
+        newcameramtx, roi = cv.getOptimalNewCameraMatrix(
+            int_mtx, dist_coef, (w, h), 1, (w, h)
+        )
 
         result = cv.undistort(frame, int_mtx, dist_coef, None, newcameramtx)
-        
+
         # crop the image
         x, y, w, h = roi
         cropped_result = result[y : y + h, x : x + w]
 
         cv.imwrite(os.path.join(result_dir, f"frame{i}.png"), cropped_result)
-        
-        
-    objpoints = real_world_points_3d
-    imgpoints = img_points_2d
-        
+
+    # calculate the mean reprojection error
     mean_error = 0
-    for i in range(len(objpoints)):
-        imgpoints2, _ = cv.projectPoints(objpoints[i], rvecs[i], tvecs[i], int_mtx, dist_coef)
-        error = cv.norm(imgpoints[i], imgpoints2, cv.NORM_L2)/len(imgpoints2)
+    for i in range(len(real_world_points_3d)):
+        img_points_reprojected, _ = cv.projectPoints(
+            real_world_points_3d[i], rvecs[i], tvecs[i], int_mtx, dist_coef
+        )
+        error = cv.norm(img_points_2d[i], img_points_reprojected, cv.NORM_L2) / len(
+            img_points_reprojected
+        )
         mean_error += error
-    print( "\nTotal Error: {}".format(mean_error/len(objpoints)) )
+    print("\nMean Reprojection Error: {}".format(mean_error / len(real_world_points_3d)))
 
 
 if __name__ == "__main__":
     DEBUG = False
     PATTERN_SIZE = (6, 6)
     NUM_CALIBRATION_FRAMES = 20
-    
-    CB_FLAGS = (
-        cv.CALIB_CB_NORMALIZE_IMAGE
-        + cv.CALIB_CB_ADAPTIVE_THRESH
-    )
+
+    CB_FLAGS = cv.CALIB_CB_NORMALIZE_IMAGE + cv.CALIB_CB_ADAPTIVE_THRESH
     SP_CRITERIA = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 30, 0.001)
 
     source_file = os.path.join(".", "src", "video_new.h264")
