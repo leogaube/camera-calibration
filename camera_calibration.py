@@ -76,13 +76,14 @@ def extract_frames(source_file, output_dir, num_frames, num_candidate_frames=50)
 
 
 def detectChessboardPattern(frames):
+    
     # prepare chessboard corner points, like (0,0,0), (1,0,0), (2,0,0), ..., (4,4,0)
-    corner_points = np.zeros((PATTERN_SIZE[0] * PATTERN_SIZE[1], 3), np.float32)
-    corner_points[:, :2] = np.mgrid[0 : PATTERN_SIZE[0], 0 : PATTERN_SIZE[1]].T.reshape(
+    cb_corner_points = np.zeros((PATTERN_SIZE[0] * PATTERN_SIZE[1], 3), np.float32)
+    cb_corner_points[:, :2] = np.mgrid[0 : PATTERN_SIZE[0], 0 : PATTERN_SIZE[1]].T.reshape(
         -1, 2
     )
 
-    # print(corner_points)
+    # print(cb_corner_points)
 
     real_world_points_3d = []
     img_points_2d = []
@@ -97,18 +98,23 @@ def detectChessboardPattern(frames):
                 gray_frame, corners, (11, 11), (-1, -1), SP_CRITERIA
             )
 
-            real_world_points_3d.append(corner_points)
+            real_world_points_3d.append(cb_corner_points)
             img_points_2d.append(subpixel_corners)
 
             if DEBUG:
                 cv.drawChessboardCorners(
-                    gray_frame, PATTERN_SIZE, subpixel_corners, success
+                    frame, PATTERN_SIZE, subpixel_corners, success
                 )
+                
+                for obj_point, pos in zip(cb_corner_points, corners):
+                    cv.putText(frame, str(obj_point), (int(pos[0][0])+10, int(pos[0][1])-10), cv.FONT_HERSHEY_DUPLEX, 0.85, (255, 0, 255), 1)
 
-                cv.imshow("cb", gray_frame)
+                cv.imshow("cb", frame)
                 cv.waitKey()
                 cv.destroyAllWindows()
-
+                
+                cv.imwrite("frame.png", frame)
+            
     return real_world_points_3d, img_points_2d
 
 
@@ -129,18 +135,8 @@ def undistort(frames, result_dir):
         os.mkdir(result_dir)
 
     for i, frame in enumerate(frames):
-        h, w = frame.shape[:2]
-        newcameramtx, roi = cv.getOptimalNewCameraMatrix(
-            int_mtx, dist_coef, (w, h), 1, (w, h)
-        )
-
-        result = cv.undistort(frame, int_mtx, dist_coef, None, newcameramtx)
-
-        # crop the image
-        x, y, w, h = roi
-        cropped_result = result[y : y + h, x : x + w]
-
-        cv.imwrite(os.path.join(result_dir, f"frame{i}.png"), cropped_result)
+        result = cv.undistort(frame, int_mtx, dist_coef, None, None)
+        cv.imwrite(os.path.join(result_dir, f"frame{i}.png"), result)
 
     # calculate the mean reprojection error
     mean_error = 0
@@ -155,11 +151,13 @@ def undistort(frames, result_dir):
     print("\nMean Reprojection Error: {}".format(mean_error / len(real_world_points_3d)))
 
 
+
+
 if __name__ == "__main__":
     DEBUG = False
-    PATTERN_SIZE = (6, 6)
+    PATTERN_SIZE = (5, 5)
     NUM_CALIBRATION_FRAMES = 20
-
+    
     CB_FLAGS = cv.CALIB_CB_NORMALIZE_IMAGE + cv.CALIB_CB_ADAPTIVE_THRESH
     SP_CRITERIA = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 30, 0.001)
 
