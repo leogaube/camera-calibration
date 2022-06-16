@@ -1,3 +1,13 @@
 /misc
-/results
-/src
+*.h264
+*.mp4
+*.aux
+*.bbl
+*.blg
+*.fdb_latexmk
+*.fls
+*.log
+*.out
+*.synctex.gz
+*.toc
+*.synctex
