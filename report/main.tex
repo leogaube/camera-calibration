@@ -6,15 +6,16 @@
 \usepackage{algorithm, algpseudocode}
 \usepackage{graphicx}
 \usepackage{subcaption}
-\usepackage{listings}
 \usepackage{float}
 \usepackage{amsmath}
+\usepackage{pythonhighlight}
 
 \setlength{\belowcaptionskip}{5pt}
 
 \title{Camera Calibration}
 \author{Leopold Gaube - 34948, IN}
 \date{\today}
+
 \begin{document}
 \maketitle
 \tableofcontents
@@ -54,9 +55,9 @@ Instead of choosing calibration frames in fixed intervals, we consider 25 consec
 The extent of blur in an image can be calculated using the Variance of Laplacian, with a low variance corresponding to a high amount of blur \cite{BlurDetection}.
 With OpenCV it is simple to obtain a focus measure for any greyscale image:
 
-\begin{lstlisting}
+\begin{python}
     focus_score = cv2.Laplacian(frame, cv2.CV_64F).var()
-\end{lstlisting}
+\end{python}
 
 The absolute value is of no interest, but the highest value of the 25 candidate frames corresponds to the sharpest one.
 
@@ -79,6 +80,9 @@ Together with the distortion coefficients
 $$(k_1, k_2, p_1, p_2, k_3)$$
 
 the intrinsic matrix can be used to undistort images.
+
+K is an upper triangular matrix, therefore, the determinant of K is the product of its trace, 
+which is non-zero because the focal lengths $f_x$ and $f_y$ are always greater than 0. 
 
 In order to estimate the instrinsic camera matrix and distortion coefficients, a predefined object has to be detected and localized in the calibration frames.
 This algorithm uses a checkerboard as such a predefined object, because it possesses adventagious properties that simplify the calibration process.
@@ -113,8 +117,14 @@ This makes it possible to set identical real-world object positions for all 15 c
 
 \section{Results}
 OpenCV provides a functionality to calculate the intrinsic camera matrix and distortion coefficients automatically from the object positions and corresponding image positions.
-In addition, it also provides extrinsic parameters in form of rotational and translational vectors.
-These extrinsic parameters are not required for undistorting images, but will later be used for reprojecting object points onto the image.
+In addition, it also provides rotation and translation vectors.
+These are not required for undistorting images, but will later be used for projecting the object points onto the image in order to calculate the calibration error.
+
+\begin{python}
+ret, int_mtx, dist_coef, rot_vecs, trans_vecs = cv.calibrateCamera(
+    world_points_3d, img_points_2d, (1920, 1080), None, None
+)
+\end{python}
 
 undistort...!
 
