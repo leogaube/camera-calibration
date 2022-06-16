@@ -51,7 +51,7 @@ For this, the video gets sectioned into 20 evenly spaced time steps and we try t
 This way, we get varying checkerboard positions, assuming the checkerboard is being moved around in the calibration video.
 
 Some of the frames may have a lot of motion blur which can be problematic for accurately localizing the checkerboard corners.
-Instead of choosing calibration frames in fixed intervals, we consider 25 consecutive candidate frames for each video section (corresponding to one second of video) from which we only choose the least blurred one. (ToDo: Grafik?)
+Instead of choosing calibration frames in fixed intervals, we consider 25 consecutive candidate frames for each video section (corresponding to one second of video) from which we only choose the least blurred one.
 The extent of blur in an image can be calculated using the Variance of Laplacian, with a low variance corresponding to a high amount of blur \cite{BlurDetection}.
 With OpenCV it is simple to obtain a focus measure for any greyscale image:\\
 
@@ -86,7 +86,7 @@ The focal lengths $f_x$ and $f_y$ are always greater than zero, thus, the determ
 Finding the inverse of K would allow to go from 2D pixel coordinates back to 3D camera coordinates with the restriction that some depth information is lost.
 
 In order to estimate the instrinsic matrix and distortion coefficients, a predefined object has to be detected and localized in the calibration frames.
-This algorithm uses a checkerboard as such a predefined object, because it possesses adventagious properties that simplify the calibration process.
+This algorithm uses a checkerboard as such a predefined object, because it possesses advantagious properties that simplify the calibration process.
 Because a checkerboard is flat, all detection points lay on the same plane in equal distance to each other.
 Both calibration videos show a board with 8x8 squares, but only corner points of four intersecting squares are used, thus, it depicts a 7x7 pattern.
 
@@ -106,7 +106,7 @@ The world coordinate system can be set to any position.
 Canonically, we choose the left top corner of the checkerboard as its origin.
 Furthermore, the distance between each checkerboard square is set to be one unit in both x and y direction. 
 The checkerboard is flat, which allows all object points to sit on the z=0 plane.
-This makes it possible to set identical real-world object positions for all 15 calibration frames.
+This makes it possible to set identical real-world object positions for all 15 calibration frames.\\
 
 \begin{figure}[ht!]
 	\centering
@@ -121,41 +121,34 @@ With the checkerboard localized in all calibration frames, OpenCV provides a fun
 The object positions and corresponding image positions are used as parameters to cv2.calibrateCamera() to obtain the intrinsic camera matrix and distortion coefficients.
 These are then used as input to cv2.undistort() to undistort all calibration frames.
 
-Together with their originals, a number of undistorted images have been added to the end of this report.
-In Fig.\ref{fig:comparison} it can be seen that the distortion has been corrected.
-It should also be noted that the undistortion process warps the image in a way that some pixels on the image edges have to be discarded to keep a clean rectangular image.
+In Fig. \ref{fig:comparison} it can be seen that the distortion has been corrected.
+It should also be noted that the undistortion process warps the image in a way that some pixels on the image edges have to be discarded to keep a clean rectangular image.\\
 
 \begin{figure}[H]
 	\centering
-	\begin{subfigure}[t]{0.45\linewidth}
-		\includegraphics[width=\linewidth]{imgs/frame_11.png}
+	\begin{subfigure}[t]{0.47\linewidth}
+		\includegraphics[width=\linewidth]{imgs/distorted.png}
 		\caption{distorted image}
 		\label{subfig:distorted}
 	\end{subfigure}
-	\hspace{0.02\textwidth}
-	\begin{subfigure}[t]{0.45\linewidth}
-		\includegraphics[width=\linewidth]{imgs/frame11.png}
+	\hspace{0.01\textwidth}
+	\begin{subfigure}[t]{0.47\linewidth}
+		\includegraphics[width=\linewidth]{imgs/undistorted.png}
 		\caption{undistorted image}
 		\label{subfig:undistorted}
 	\end{subfigure}
-    \caption{In the original image (\ref{sub@subfig:distorted}) supposed straight lines appear curved. Undistorting this image (\ref{sub@subfig:undistorted}) resolve the problem as indicated by corrsponding straight red lines overlayed onto both images.}
+    \caption{In the original image (\ref{sub@subfig:distorted}) supposed straight lines appear curved. Undistorting the image (\ref{sub@subfig:undistorted}) resolve this problem. Straight red lines have been overlayed onto both images, to make the distortion more visible.}
 	\label{fig:comparison}
 \end{figure}
 
-\begin{python}
-ret, int_mtx, dist_coef, rot_vecs, trans_vecs = cv.calibrateCamera(
-    world_points_3d, img_points_2d, (1920, 1080), None, None
-)
-
-for i, frame in enumerate(frames):
-    result = cv.undistort(frame, int_mtx, dist_coef, None, None)
-    cv.imwrite(os.path.join(result_dir, f"frame{i}.png"), result)
-\end{python}
-
 \section{Results}
-In addition to the intrinsic matrix and distortion coefficients, cv2.calibrateCamera() also returns rotation and translation vectors.
-The undistorted images look as expected, but in order to objectively measure the quality of the calibration, the 3D real-world object points can be projected back onto to 2D image using all of the aforementioned parameters.
-The closer the projected object points are to the detected checkerboard corners the smaller the reprojection error and the better the calibration.
+Together with their originals, four pairs of undistorted images can be found at the end of this report (see Fig.\ref{fig:res1}-\ref{fig:res4}).
+
+The undistorted images look as expected, but in order to objectively measure the quality of the calibration, the 3D real-world object points can be projected back onto the 2D image.
+In addition to the intrinsic matrix and distortion coefficients, cv2.calibrateCamera() also returns rotation and translation vectors, which are also needed for cv2.projectPoints().
+The closer the projected object points are to the detected checkerboard corners, the smaller the reprojection error and the better the calibration.
+
+\clearpage
 
 The presented algorithm retrieved the following intrinsic matrix for the old video
 
@@ -169,7 +162,7 @@ K =
 $$
 
 with distortion coefficients
-$(-0.3394, 0.1437, -0.0010, -0.0001, -0.0314)$
+$$(-0.3394, 0.1437, -0.0010, -0.0001, -0.0314)$$
 and a mean reprojection error of 0.0372.
 
 For the new video it produced 
@@ -184,10 +177,46 @@ K =
 $$
 
 with distortion coefficients
-$(-0.3644, 0.1787, 0.0010, -0.0011, -0.0518)$
+$$(-0.3644, 0.1787, 0.0010, -0.0011, -0.0518)$$
 and a mean reprojection error of 0.02821.
 
 Each intrinsic matrix and distortion coefficients gets saved to a file, as they have to be calculated only once and can be reused to undistort any image, assuming the same camera is being used.
+
+
+\begin{figure}[H]
+	\includegraphics[width=\linewidth]{imgs/old_2547.png}
+	\par\bigskip
+	\includegraphics[width=\linewidth]{imgs/old2547.png}
+	\caption{old video, frame 2547}
+	\label{fig:res1}
+\end{figure}
+
+\begin{figure}[H]
+	\includegraphics[width=\linewidth]{imgs/old_2986.png}
+	\par\bigskip
+	\includegraphics[width=\linewidth]{imgs/old2986.png}
+	\caption{old video, frame 2986}
+	\label{fig:res2}
+\end{figure}
+
+\begin{figure}[H]
+	\includegraphics[width=\linewidth]{imgs/new_1766.png}
+	\par\bigskip
+	\includegraphics[width=\linewidth]{imgs/new1766.png}
+	\caption{new video, frame 1766}
+	\label{fig:res3}
+\end{figure}
+
+\begin{figure}[H]
+	\includegraphics[width=\linewidth]{imgs/new_2259.png}
+	\par\bigskip
+	\includegraphics[width=\linewidth]{imgs/new2259.png}
+	\caption{new video, frame 2259}
+	\label{fig:res4}
+\end{figure}
+
+
+
 
 \clearpage
 \bibliographystyle{alpha}
