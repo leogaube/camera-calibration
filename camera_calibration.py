@@ -76,12 +76,12 @@ def extract_frames(source_file, output_dir, num_frames, num_candidate_frames=50)
 
 
 def detectChessboardPattern(frames):
-    
+
     # prepare chessboard corner points, like (0,0,0), (1,0,0), (2,0,0), ..., (4,4,0)
     cb_corner_points = np.zeros((PATTERN_SIZE[0] * PATTERN_SIZE[1], 3), np.float32)
-    cb_corner_points[:, :2] = np.mgrid[0 : PATTERN_SIZE[0], 0 : PATTERN_SIZE[1]].T.reshape(
-        -1, 2
-    )
+    cb_corner_points[:, :2] = np.mgrid[
+        0 : PATTERN_SIZE[0], 0 : PATTERN_SIZE[1]
+    ].T.reshape(-1, 2)
 
     # print(cb_corner_points)
 
@@ -102,19 +102,25 @@ def detectChessboardPattern(frames):
             img_points_2d.append(subpixel_corners)
 
             if DEBUG:
-                cv.drawChessboardCorners(
-                    frame, PATTERN_SIZE, subpixel_corners, success
-                )
-                
+                cv.drawChessboardCorners(frame, PATTERN_SIZE, subpixel_corners, success)
+
                 for obj_point, pos in zip(cb_corner_points, corners):
-                    cv.putText(frame, str(obj_point), (int(pos[0][0])+10, int(pos[0][1])-10), cv.FONT_HERSHEY_DUPLEX, 0.85, (255, 0, 255), 1)
+                    cv.putText(
+                        frame,
+                        str(obj_point),
+                        (int(pos[0][0]) + 10, int(pos[0][1]) - 10),
+                        cv.FONT_HERSHEY_DUPLEX,
+                        0.85,
+                        (255, 0, 255),
+                        1,
+                    )
 
                 cv.imshow("cb", frame)
                 cv.waitKey()
                 cv.destroyAllWindows()
-                
+
                 cv.imwrite("frame.png", frame)
-            
+
     return real_world_points_3d, img_points_2d
 
 
@@ -148,20 +154,20 @@ def undistort(frames, result_dir):
             img_points_reprojected
         )
         mean_error += error
-    print("\nMean Reprojection Error: {}".format(mean_error / len(real_world_points_3d)))
-
-
+    print(
+        "\nMean Reprojection Error: {}".format(mean_error / len(real_world_points_3d))
+    )
 
 
 if __name__ == "__main__":
     DEBUG = False
     PATTERN_SIZE = (5, 5)
     NUM_CALIBRATION_FRAMES = 20
-    
+
     CB_FLAGS = cv.CALIB_CB_NORMALIZE_IMAGE + cv.CALIB_CB_ADAPTIVE_THRESH
     SP_CRITERIA = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 30, 0.001)
 
-    source_file = os.path.join(".", "src", "video_new.h264")
+    source_file = os.path.join(".", "src", "video_old.h264")
     output_dir = os.path.join(".", "src", "frames")
     result_dir = os.path.join(".", "results")
 
