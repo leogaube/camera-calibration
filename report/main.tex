@@ -41,7 +41,7 @@ Together they allow to undistort any image taken with the same camera, which is 
 The code and all frames used for the camera calibration task are available in this \href{https://gitlab.com/gaubeleo/camera-calibration}{GitLab repository} \cite{Gitlab}.
 
 \section{Frame Selection}
-In theory, we only need three frames to retrieve the intrinsic camera matrix. (why?)
+In theory, we only need three frames to retrieve the intrinsic camera matrix.
 In practise, more frames give better results and it is also advisable to use frames with the checkerboard present in different parts of the image and with varying distance.
 The OpenCV documentation advises to use at least ten images for a camera calibration \cite{CameraCalibration}.
 It is possible to manually extract appropriate frames from the calibration video, but we chose to automate this process in order to minimize work for the user in future calibrations. 
@@ -53,7 +53,7 @@ This way, we get varying checkerboard positions, assuming the checkerboard is be
 Some of the frames may have a lot of motion blur which can be problematic for accurately localizing the checkerboard corners.
 Instead of choosing calibration frames in fixed intervals, we consider 25 consecutive candidate frames for each video section (corresponding to one second of video) from which we only choose the least blurred one. (ToDo: Grafik?)
 The extent of blur in an image can be calculated using the Variance of Laplacian, with a low variance corresponding to a high amount of blur \cite{BlurDetection}.
-With OpenCV it is simple to obtain a focus measure for any greyscale image:
+With OpenCV it is simple to obtain a focus measure for any greyscale image:\\
 
 \begin{python}
     focus_score = cv2.Laplacian(frame, cv2.CV_64F).var()
@@ -81,10 +81,11 @@ $$(k_1, k_2, p_1, p_2, k_3)$$
 
 the intrinsic matrix can be used to undistort images.
 
-K is an upper triangular matrix, therefore, the determinant of K is the product of its trace, 
-which is non-zero because the focal lengths $f_x$ and $f_y$ are always greater than 0. 
+K is an upper triangular matrix, therefore, the determinant of K is the product of its trace. 
+The focal lengths $f_x$ and $f_y$ are always greater than zero, thus, the determinant of K must be non-zero and K is invertable.
+Finding the inverse of K would allow to go from 2D pixel coordinates back to 3D camera coordinates with the restriction that some depth information is lost.
 
-In order to estimate the instrinsic camera matrix and distortion coefficients, a predefined object has to be detected and localized in the calibration frames.
+In order to estimate the instrinsic matrix and distortion coefficients, a predefined object has to be detected and localized in the calibration frames.
 This algorithm uses a checkerboard as such a predefined object, because it possesses adventagious properties that simplify the calibration process.
 Because a checkerboard is flat, all detection points lay on the same plane in equal distance to each other.
 Both calibration videos show a board with 8x8 squares, but only corner points of four intersecting squares are used, thus, it depicts a 7x7 pattern.
@@ -116,25 +117,45 @@ This makes it possible to set identical real-world object positions for all 15 c
 
 
 \section{Results}
-OpenCV provides a functionality to calculate the intrinsic camera matrix and distortion coefficients automatically from the object positions and corresponding image positions.
-In addition, it also provides rotation and translation vectors.
-These are not required for undistorting images, but will later be used for projecting the object points onto the image in order to calculate the calibration error.
+With the checkerboard localized in all calibration frames, OpenCV provides a functionality to undistort images in a couple of function calls.
+The object positions and corresponding image positions are used as parameters to cv2.calibrateCamera() to obtain the intrinsic camera matrix and distortion coefficients.
+These are then used as input to cv2.undistort() to undistort all calibration frames.
+
+Comparing the resulting images to their distorted originals, one can clearly see that the problem with straight lines appearing curved has been resolved (see Fig.\ref{fig:comparison}).
+It should be noted that the undistortion process warps the image in a way that some pixels on the edge have to be discarded to keep a clean rectangular image.
+
+\begin{figure}[H]
+	\centering
+	\begin{subfigure}[t]{0.45\linewidth}
+		\includegraphics[width=\linewidth]{imgs/distorted.png}
+		\caption{distorted image}
+		\label{subfig:distorted}
+	\end{subfigure}
+	\hspace{0.02\textwidth}
+	\begin{subfigure}[t]{0.45\linewidth}
+		\includegraphics[width=\linewidth]{imgs/undistorted.png}
+		\caption{undistorted image}
+		\label{subfig:undistorted}
+	\end{subfigure}
+    \caption{In the original images (\ref{sub@subfig:distorted}) supposed straight lines appear curved. Undistorting these images (\ref{sub@subfig:undistorted}) resolve this problem.}
+	\label{fig:comparison}
+\end{figure}
 
 \begin{python}
 ret, int_mtx, dist_coef, rot_vecs, trans_vecs = cv.calibrateCamera(
     world_points_3d, img_points_2d, (1920, 1080), None, None
 )
+
+for i, frame in enumerate(frames):
+    result = cv.undistort(frame, int_mtx, dist_coef, None, None)
+    cv.imwrite(os.path.join(result_dir, f"frame{i}.png"), result)
 \end{python}
 
-undistort...!
+In addition to the intrinsic matrix and distortion coefficients, cv2.calibrateCamera() also returns rotation and translation vectors.
+The undistorted images look as expected, but in order to objectively measure the quality of the calibration, the 3D real-world object points can be projected back onto to 2D image using all of the aforementioned parameters.
+The closer the projected object points are to the detected checkerboard corners the smaller the reprojection error and the better the calibration.
 
-Undistorting images result in some black regions on the edges where there is no information in the orignal image.
-We crop these regions to obtain clean undistorted images.
-
-In order to measure the quality of the calibration, the 3D real-world object points can be projected back onto to 2D image points using the intrinsic matrix and distortion coefficients as well as the rotational and translational vectors.
-The closer they are to the detected checkerboard corners the smaller the reprojection error and the better the calibration.
-
-Our Algorithm retrieved the following intrinsic matrix for the old video
+The presented algorithm retrieved the following intrinsic matrix for the old video
 
 $$
 K =
@@ -168,7 +189,8 @@ $$(-0.83698399, 0.69455783, -0.01109099, -0.01136698, 0.0078521)$$
 
 and a mean reprojection error of 0.09529720894585678.
 
-The intrinsic matrices gets saved to a file, as it has to be calculated only once and can be reused to undistort images taken in different scenes assuming the same camera is being used.
+Each intrinsic matrix and distortion coefficients gets saved to a file, as they have to be calculated only once and can be reused to undistort any image, assuming the same camera is being used.
+Finally,
 
 \clearpage
 \bibliographystyle{alpha}
