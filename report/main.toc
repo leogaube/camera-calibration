@@ -1,7 +1,0 @@
-\babel@toc {english}{}
-\contentsline {section}{\numberline {1}Introduction}{2}{section.1}%
-\contentsline {section}{\numberline {2}Frame Selection}{2}{section.2}%
-\contentsline {section}{\numberline {3}Intrinsic Camera Matrix}{3}{section.3}%
-\contentsline {section}{\numberline {4}Results}{4}{section.4}%
-\contentsline {section}{\nonumberline References}{6}{section*.3}%
-\providecommand \tocbasic@end@toc@file {}\tocbasic@end@toc@file 
